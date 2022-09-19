@@ -1,6 +1,9 @@
+from curses import flash
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, FormField, TextAreaField, FileField
+from wtforms.validators import InputRequired, Length, ValidationError
 from wtforms.fields.html5 import DateField
+from app import app, query_db
 
 # defines all forms in the application, these will be instantiated by the template,
 # and the routes.py will read the values of the fields
@@ -14,12 +17,17 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class RegisterForm(FlaskForm):
-    first_name = StringField('First Name', render_kw={'placeholder': 'First Name'})
-    last_name = StringField('Last Name', render_kw={'placeholder': 'Last Name'})
-    username = StringField('Username', render_kw={'placeholder': 'Username'})
-    password = PasswordField('Password', render_kw={'placeholder': 'Password'})
-    confirm_password = PasswordField('Confirm Password', render_kw={'placeholder': 'Confirm Password'})
+    first_name = StringField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'First Name'})
+    last_name = StringField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Last Name'})
+    username = StringField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Username'})
+    password = PasswordField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Password'})
+    confirm_password = PasswordField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Confirm Password'})
     submit = SubmitField('Sign Up')
+
+    def validate_username(self, username):
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username=username.data), one=True)
+        if user != None:
+            flash("that username is already taken")
 
 class IndexForm(FlaskForm):
     login = FormField(LoginForm)
