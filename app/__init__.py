@@ -3,6 +3,7 @@ from config import Config
 from flask_bootstrap import Bootstrap
 # from flask_login import LoginManager
 import sqlite3
+from sqlite3 import Error
 import os
 
 # create and configure app
@@ -39,6 +40,59 @@ def query_db(query, one=False):
     return (rv[0] if rv else None) if one else rv
 
 # TODO: Add more specific queries to simplify code
+
+### My AJ attempt ###
+#### INSERT #########
+def create_connection(db_file):
+    """ create a database connection to the SQLite database
+        specified by db_file
+    :param db_file: database file
+    :return: Connection object or None
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        return conn
+    except Error as e:
+        print(e)
+
+    return conn
+# Add account fikset mot sqlinjection
+def add_account(conn, username, first_name, last_name, password):
+    sql = ''' INSERT INTO Users(username, first_name, last_name, password)
+              VALUES(?,?,?,?) '''
+    try:
+        cur = conn.cursor()
+        cur.execute(sql, (username, first_name, last_name, password))
+        conn.commit()
+    except Error as e:
+        print(e)
+
+# select account
+# def select_account(conn, user):
+#     cur = conn.cursor()
+#     sql = '''SELECT * FROM Users WHERE username="%s";'''
+#     tup = (user)
+#     cur.execute(sql, tup)
+#     accounts = {}
+#     for (id, username, first_name, last_name, password, education, employment, music, movie, nationality, birthday) in cur:
+#         accounts = { 
+#             "id": id, 
+#             "username": username, 
+#             "first_name": first_name, 
+#             "last_name": last_name, 
+#             "password": password,
+#             "education": education,
+#             "employment": employment,
+#             "music": music,
+#             "movie": movie,
+#             "nationality": nationality,
+#             "birthday": birthday
+#             }
+
+#     return accounts
+
+
 
 # automatically called when application is closed, and closes db connection
 @app.teardown_appcontext

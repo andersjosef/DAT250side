@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for, request, session
-from app import app, query_db
+from app import app, query_db, add_account, create_connection
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm, RegisterForm, LoginForm
 from datetime import datetime
 import time
@@ -11,6 +11,19 @@ import os
 def fileType(filename):
     fil = filename.split(".")[-1]
     return fil
+
+#check for valid letters
+def is_valid(text):
+    alphabet = "abcdefghijklmnopqrstuvwxyzæøå1234567890 /_:;-"
+    for char in text:
+        # char.lower() makes sure the text is lowercase, otherwise "Hello" would not be valid because capital H wasn't in the alphabet.
+        if char.lower() not in alphabet:
+            return False
+    else: # We've finished iterating, which means all characters were in the alphabet.
+        return True
+
+#variables
+database = r"./database.db"
     
 # this file contains all the different routes, and the logic for communicating with the database
 
@@ -20,23 +33,37 @@ def fileType(filename):
 def index():
     form = IndexForm()
     if form.login.is_submitted() and form.login.submit.data:
-        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
-        if user == None:
-            flash('Sorry, this user does not exist!')
-        elif check_password_hash(user['password'] ,form.login.password.data):
+        if is_valid(form.login.username.data):
+            user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
+            # conn = create_connection(database)
+            # user = select_account(conn, form.login.username.data)
+            print(user)
+            # conn.close()
+            if user == None:
+                flash('Sorry, this user does not exist!')
+            elif check_password_hash(user['password'] ,form.login.password.data):
 
-            return redirect(url_for('stream', username=form.login.username.data))
+                return redirect(url_for('stream', username=form.login.username.data))
+            else:
+                flash('Sorry, wrong password!')
         else:
-            flash('Sorry, wrong password!')
+            flash("you have illegal characters")
 
     elif form.register.is_submitted() and form.register.submit.data:
-        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.register.username.data), one=True)
-        if user != None:
-            flash("Username is already taken, please choose a different one")
+        if is_valid(form.register.username.data):
+            user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.register.username.data), one=True)
+            if user != None:
+                flash("Username is already taken, please choose a different one")
+            else:
+                conn = create_connection(database)
+                add_account(conn, form.register.username.data, form.register.first_name.data, form.register.last_name.data, generate_password_hash(form.register.password.data))
+                conn.close()
+                # query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
+                # form.register.last_name.data, generate_password_hash(form.register.password.data)))
+                return redirect(url_for('index'))
         else:
-            query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
-            form.register.last_name.data, generate_password_hash(form.register.password.data)))
-            return redirect(url_for('index'))
+            flash("you have illegal characters")
+
     return render_template('index.html', title='Welcome', form=form)
 
 
