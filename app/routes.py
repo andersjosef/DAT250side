@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, request, session
 from app import app, query_db
-from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm
+from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm, RegisterForm, LoginForm
 from datetime import datetime
 import time
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -24,14 +24,19 @@ def index():
         if user == None:
             flash('Sorry, this user does not exist!')
         elif check_password_hash(user['password'] ,form.login.password.data):
+
             return redirect(url_for('stream', username=form.login.username.data))
         else:
             flash('Sorry, wrong password!')
 
     elif form.register.is_submitted() and form.register.submit.data:
-        query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
-        form.register.last_name.data, generate_password_hash(form.register.password.data)))
-        return redirect(url_for('index'))
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.register.username.data), one=True)
+        if user != None:
+            flash("Username is already taken, please choose a different one")
+        else:
+            query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
+            form.register.last_name.data, generate_password_hash(form.register.password.data)))
+            return redirect(url_for('index'))
     return render_template('index.html', title='Welcome', form=form)
 
 
