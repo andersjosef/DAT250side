@@ -57,7 +57,6 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for('stream', username=current_user.username))
     if form.login.validate_on_submit() and form.login.submit.data:
-        print(form.login.recaptcha.data)
         if is_valid(form.login.username.data):
             user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
             # conn = create_connection(database)
@@ -78,12 +77,16 @@ def index():
             flash("you have illegal characters")
 
     elif form.register.is_submitted() and form.register.submit.data:
+    # elif form.register.validate_on_submit() and form.register.submit.data: # får ikke denne linjen til å virke :( da blir det vanskelig met captcha og sjekking av lengde av ord osv :(
+
         if is_valid(form.register.username.data):
             user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.register.username.data), one=True)
             if user != None:
                 flash("Username is already taken, please choose a different one")
+            elif form.register.password.data != form.register.confirm_password.data:
+                flash("Passwords are not equal")
             else:
-                conn = create_connection(database)
+                conn = create_connection(database)  
                 add_account(conn, form.register.username.data, form.register.first_name.data, form.register.last_name.data, generate_password_hash(form.register.password.data))
                 conn.close()
                 # query_db('INSERT INTO Users (username, first_name, last_name, password) VALUES("{}", "{}", "{}", "{}");'.format(form.register.username.data, form.register.first_name.data,
@@ -91,7 +94,7 @@ def index():
                 return redirect(url_for('index'))
         else:
             flash("you have illegal characters")
-
+    print("im not in")
     return render_template('index.html', title='Welcome', form=form)
 
 # logout
@@ -130,6 +133,8 @@ def stream(username):
 @login_required
 
 def comments(username, p_id):
+    if username != current_user.get_username():
+        return redirect(url_for('comments', username=current_user.get_username()))
     form = CommentsForm()
     if form.is_submitted():
         user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
@@ -144,6 +149,8 @@ def comments(username, p_id):
 @login_required
 
 def friends(username):
+    if username != current_user.get_username():
+        return redirect(url_for('friends', username=current_user.get_username()))
     form = FriendsForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
     if form.is_submitted():
