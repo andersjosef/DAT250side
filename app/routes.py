@@ -1,11 +1,30 @@
 from flask import render_template, flash, redirect, url_for, request, session
-from app import app, query_db, add_account, create_connection
+from app import app, query_db, add_account, create_connection, login
 from app.forms import IndexForm, PostForm, FriendsForm, ProfileForm, CommentsForm, RegisterForm, LoginForm
 from datetime import datetime
 import time
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_required, login_user, logout_user, current_user
+from config import User
 # from egnefunksjoner import fileType
 import os
+
+
+# broken access control
+@login.user_loader
+def load_user(user_id):
+    user = query_db('SELECT * FROM Users WHERE id="{}";'.format(user_id), one=True)
+    if user == None:
+        return None
+    else:
+        return User(user_id, user[1])
+
+@login.unauthorized_handler
+def unauthorized_callback():
+    flash("uauthorized")
+    return redirect(url_for("index"))
+
+
 
 # functions
 def fileType(filename):
@@ -33,6 +52,8 @@ database = r"./database.db"
 @app.route('/index', methods=['GET', 'POST'])
 def index():
     form = IndexForm()
+    if current_user.is_authenticated:
+        return redirect(url_for('stream', username=current_user.username))
     if form.login.is_submitted() and form.login.submit.data:
         if is_valid(form.login.username.data):
             user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
@@ -43,7 +64,9 @@ def index():
             if user == None:
                 flash('Sorry, this user does not exist!')
             elif check_password_hash(user['password'] ,form.login.password.data):
-
+                login_form = LoginForm()
+                us = load_user(user['id'])
+                login_user(us, remember=login_form.remember_me.data)
                 return redirect(url_for('stream', username=form.login.username.data))
             else:
                 flash('Sorry, wrong password!')
@@ -67,10 +90,19 @@ def index():
 
     return render_template('index.html', title='Welcome', form=form)
 
+# logout
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
 
 # content stream page
 @app.route('/stream/<username>', methods=['GET', 'POST'])
+@login_required
 def stream(username):
+    if username != current_user.get_username():
+        return redirect(url_for('stream', username=current_user.get_username()))
     form = PostForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
     if form.is_submitted():
@@ -91,6 +123,8 @@ def stream(username):
 
 # comment page for a given post and user.
 @app.route('/comments/<username>/<int:p_id>', methods=['GET', 'POST'])
+@login_required
+
 def comments(username, p_id):
     form = CommentsForm()
     if form.is_submitted():
@@ -103,6 +137,8 @@ def comments(username, p_id):
 
 # page for seeing and adding friends
 @app.route('/friends/<username>', methods=['GET', 'POST'])
+@login_required
+
 def friends(username):
     form = FriendsForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
@@ -118,13 +154,21 @@ def friends(username):
 
 # see and edit detailed profile information of a user
 @app.route('/profile/<username>', methods=['GET', 'POST'])
+@login_required
+
 def profile(username):
     form = ProfileForm()
-    if form.is_submitted():
-        query_db('UPDATE Users SET education="{}", employment="{}", music="{}", movie="{}", nationality="{}", birthday=\'{}\' WHERE username="{}" ;'.format(
-            form.education.data, form.employment.data, form.music.data, form.movie.data, form.nationality.data, form.birthday.data, username
-        ))
-        return redirect(url_for('profile', username=username))
+    if username == current_user.get_username():
+
+        if form.is_submitted():
+            query_db('UPDATE Users SET education="{}", employment="{}", music="{}", movie="{}", nationality="{}", birthday=\'{}\' WHERE username="{}" ;'.format(
+                form.education.data, form.employment.data, form.music.data, form.movie.data, form.nationality.data, form.birthday.data, username
+            ))
+            return redirect(url_for('profile', username=username))
+        
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+        return render_template('profile.html', title='profile', username=username, user=user, form=form, autheticated=True)
+    else:
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+        return render_template('profile.html', title='profile', username=username, user=user, form=form, autheticated=False)
     
-    user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-    return render_template('profile.html', title='profile', username=username, user=user, form=form)
