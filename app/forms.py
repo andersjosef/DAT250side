@@ -20,17 +20,18 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class RegisterForm(FlaskForm):
-    first_name = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'First Name'})
-    last_name = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Last Name'})
-    username = StringField('password', validators=[InputRequired(), Length(min=4, max=80, message="hello")], render_kw={'placeholder': 'Username'})
-    password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Password'})
-    confirm_password = PasswordField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Confirm Password'})
+    first_name = StringField('First name', validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'First Name'})
+    last_name = StringField('Last name', validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Last Name'})
+    username = StringField('Username', validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Username'})
+    password = PasswordField('Password', validators=[InputRequired(), Length(min=4, max=80)], render_kw={'placeholder': 'Password'})
+    confirm_password = PasswordField('confirm password', validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Confirm Password'})
     submit = SubmitField('Sign Up')
+    # recaptcha = RecaptchaField()
 
-    def validate_username(self, username):
-        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username=username.data), one=True)
-        if user != None:
-            flash("that username is already taken")
+    # def validate_username(self, username):
+    #     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username=username.data), one=True)
+    #     if user != None:
+    #         flash("that username is already taken")
 
 class IndexForm(FlaskForm):
     login = FormField(LoginForm)

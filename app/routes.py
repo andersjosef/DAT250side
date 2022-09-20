@@ -78,10 +78,14 @@ def index():
             flash("you have illegal characters")
 
     elif form.register.is_submitted() and form.register.submit.data:
+    # elif form.register.validate_on_submit() and form.register.submit.data: # får ikke denne linjen til å virke :( da blir det vanskelig met captcha og sjekking av lengde av ord osv :(
+
         if is_valid(form.register.username.data):
             user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.register.username.data), one=True)
             if user != None:
                 flash("Username is already taken, please choose a different one")
+            elif form.register.password.data != form.register.confirm_password.data:
+                flash("Passwords are not equal")
             else:
                 conn = create_connection(database)
                 add_account(conn, form.register.username.data, form.register.first_name.data, form.register.last_name.data, generate_password_hash(form.register.password.data))
@@ -91,7 +95,7 @@ def index():
                 return redirect(url_for('index'))
         else:
             flash("you have illegal characters")
-
+    print("im not in")
     return render_template('index.html', title='Welcome', form=form)
 
 # logout
