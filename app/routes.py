@@ -36,7 +36,7 @@ def fileType(filename):
 
 #check for valid letters
 def is_valid(text):
-    alphabet = "abcdefghijklmnopqrstuvwxyzæøå1234567890 /_:;-"
+    alphabet = "abcdefghijklmnopqrstuvwxyzæøå1234567890 /_:;-()[]"
     for char in text:
         # char.lower() makes sure the text is lowercase, otherwise "Hello" would not be valid because capital H wasn't in the alphabet.
         if char.lower() not in alphabet:
@@ -119,7 +119,7 @@ def stream(username):
             path = os.path.join(app.config['UPLOAD_PATH'], form.image.data.filename)
             form.image.data.save(path)
 
-        if filtype in okFiler:
+        if filtype in okFiler and is_valid(form.content.data) and form.content.data != "":
             query_db('INSERT INTO Posts (u_id, content, image, creation_time) VALUES({}, "{}", "{}", \'{}\');'.format(user['id'], form.content.data, form.image.data.filename, datetime.now()))
             return redirect(url_for('stream', username=username))
         else:
@@ -136,10 +136,13 @@ def comments(username, p_id):
     if username != current_user.get_username():
         return redirect(url_for('comments', username=current_user.get_username()))
     form = CommentsForm()
-    if form.is_submitted():
+    if form.comment.data == "":
+        flash("Your comment is empty")
+    elif form.is_submitted() and is_valid(form.comment.data):
         user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
         query_db('INSERT INTO Comments (p_id, u_id, comment, creation_time) VALUES({}, {}, "{}", \'{}\');'.format(p_id, user['id'], form.comment.data, datetime.now()))
-
+    else:
+        flash("You have used illegal characters")
     post = query_db('SELECT * FROM Posts WHERE id={};'.format(p_id), one=True)
     all_comments = query_db('SELECT DISTINCT * FROM Comments AS c JOIN Users AS u ON c.u_id=u.id WHERE c.p_id={} ORDER BY c.creation_time DESC;'.format(p_id))
     return render_template('comments.html', title='Comments', username=username, form=form, post=post, comments=all_comments)
@@ -153,12 +156,18 @@ def friends(username):
         return redirect(url_for('friends', username=current_user.get_username()))
     form = FriendsForm()
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-    if form.is_submitted():
+    if form.is_submitted() and form.username.data == "":
+        flash("You must enter a name")
+    elif form.is_submitted() and form.username.data == current_user.get_username():
+        flash("You can not be friends with yourself silly")
+    elif form.is_submitted() and is_valid(form.username.data):
         friend = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.username.data), one=True)
         if friend is None:
             flash('User does not exist')
         else:
             query_db('INSERT INTO Friends (u_id, f_id) VALUES({}, {});'.format(user['id'], friend['id']))
+    elif form.is_submitted() and is_valid(form.username.data) == False:
+        flash("You have used illegal characters")
     
     all_friends = query_db('SELECT * FROM Friends AS f JOIN Users as u ON f.f_id=u.id WHERE f.u_id={} AND f.f_id!={} ;'.format(user['id'], user['id']))
     return render_template('friends.html', title='Friends', username=username, friends=all_friends, form=form)
@@ -171,7 +180,7 @@ def profile(username):
     form = ProfileForm()
     if username == current_user.get_username():
 
-        if form.is_submitted():
+        if form.is_submitted() and is_valid(form.education.data) and is_valid(form.employment.data) and is_valid(form.music.data) and is_valid(form.movie.data) and is_valid(form.nationality.data):
             query_db('UPDATE Users SET education="{}", employment="{}", music="{}", movie="{}", nationality="{}", birthday=\'{}\' WHERE username="{}" ;'.format(
                 form.education.data, form.employment.data, form.music.data, form.movie.data, form.nationality.data, form.birthday.data, username
             ))
