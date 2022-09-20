@@ -10,6 +10,7 @@ import os
 # functions
 def fileType(filename):
     fil = filename.split(".")[-1]
+    # if len(filename.split(".")) == 2:
     return fil
 
 #check for valid letters
@@ -74,7 +75,7 @@ def stream(username):
     user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
     if form.is_submitted():
         filtype = fileType(form.image.data.filename)
-        okFiler = ['png', 'jpeg', 'jgp']
+        okFiler = ['png', 'jpeg', 'jgp', '']
         if form.image.data:
             path = os.path.join(app.config['UPLOAD_PATH'], form.image.data.filename)
             form.image.data.save(path)
