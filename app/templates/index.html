@@ -17,10 +17,13 @@
                 <div class="card-body">
                     <h5 class="card-title">Access an existing profile</h5>
                     <form action="" method="POST" novalidate>
+                        {{ form.login.csrf_token }}
                         {{ wtf.form_field(form.login.username) }}
                         {{ wtf.form_field(form.login.password) }}
                         {{ wtf.form_field(form.login.remember_me) }}
+                        {{ wtf.form_field(form.login.recaptcha) }}
                         {{ wtf.form_field(form.login.submit, class="btn btn-primary") }}
+                        
                     </form>
                 </div>
             </div>

@@ -2,11 +2,17 @@ import os
 from flask_login import UserMixin
 
 # contains application-wide configuration, and is loaded in __init__.py
+RC_SITE_KEY = "6LczKRIiAAAAABOYgpSLaDelTAWyYzgy5KZ31QRk"
+RC_SECRET_KEY = "6LczKRIiAAAAAB-LgexIAK3t13gzwxpzR1UsXK3T"
+
+
 
 class Config(object):
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'secret' # TODO: Use this with wtforms
     DATABASE = 'database.db'
     UPLOAD_PATH = 'app/static/uploads'
+    RECAPTCHA_PUBLIC_KEY = RC_SITE_KEY
+    RECAPTCHA_SECRET_KEY = RC_SECRET_KEY
     ALLOWED_EXTENSIONS = {} # Might use this at some point, probably don't want people to upload any file type
 
 class User(UserMixin):

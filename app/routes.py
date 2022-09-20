@@ -5,11 +5,13 @@ from datetime import datetime
 import time
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_required, login_user, logout_user, current_user
-from config import User
+from config import User, RC_SITE_KEY, RC_SECRET_KEY
 # from egnefunksjoner import fileType
 import os
 
 
+app.config['RECAPTCHA_PUBLIC_KEY'] = RC_SITE_KEY
+app.config['RECAPTCHA_PRIVATE_KEY'] = RC_SECRET_KEY
 # broken access control
 @login.user_loader
 def load_user(user_id):
@@ -54,7 +56,8 @@ def index():
     form = IndexForm()
     if current_user.is_authenticated:
         return redirect(url_for('stream', username=current_user.username))
-    if form.login.is_submitted() and form.login.submit.data:
+    if form.login.validate_on_submit() and form.login.submit.data:
+        print(form.login.recaptcha.data)
         if is_valid(form.login.username.data):
             user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
             # conn = create_connection(database)
@@ -64,6 +67,7 @@ def index():
             if user == None:
                 flash('Sorry, this user does not exist!')
             elif check_password_hash(user['password'] ,form.login.password.data):
+            # if form.login.validate_on_submit():
                 login_form = LoginForm()
                 us = load_user(user['id'])
                 login_user(us, remember=login_form.remember_me.data)
