@@ -158,11 +158,17 @@ def friends(username):
 
 def profile(username):
     form = ProfileForm()
-    if form.is_submitted():
-        query_db('UPDATE Users SET education="{}", employment="{}", music="{}", movie="{}", nationality="{}", birthday=\'{}\' WHERE username="{}" ;'.format(
-            form.education.data, form.employment.data, form.music.data, form.movie.data, form.nationality.data, form.birthday.data, username
-        ))
-        return redirect(url_for('profile', username=username))
+    if username == current_user.get_username():
+
+        if form.is_submitted():
+            query_db('UPDATE Users SET education="{}", employment="{}", music="{}", movie="{}", nationality="{}", birthday=\'{}\' WHERE username="{}" ;'.format(
+                form.education.data, form.employment.data, form.music.data, form.movie.data, form.nationality.data, form.birthday.data, username
+            ))
+            return redirect(url_for('profile', username=username))
+        
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+        return render_template('profile.html', title='profile', username=username, user=user, form=form, autheticated=True)
+    else:
+        user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
+        return render_template('profile.html', title='profile', username=username, user=user, form=form, autheticated=False)
     
-    user = query_db('SELECT * FROM Users WHERE username="{}";'.format(username), one=True)
-    return render_template('profile.html', title='profile', username=username, user=user, form=form)

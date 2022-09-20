@@ -1,4 +1,5 @@
 from curses import flash
+from email import message
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, FormField, TextAreaField, FileField
 from wtforms.validators import InputRequired, Length, ValidationError
@@ -17,10 +18,10 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class RegisterForm(FlaskForm):
-    first_name = StringField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'First Name'})
-    last_name = StringField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Last Name'})
-    username = StringField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Username'})
-    password = PasswordField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Password'})
+    first_name = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'First Name'})
+    last_name = StringField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Last Name'})
+    username = StringField('password', validators=[InputRequired(), Length(min=4, max=80, message="hello")], render_kw={'placeholder': 'Username'})
+    password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)], render_kw={'placeholder': 'Password'})
     confirm_password = PasswordField(validators=[InputRequired(), Length(min=1, max=20)], render_kw={'placeholder': 'Confirm Password'})
     submit = SubmitField('Sign Up')
 
