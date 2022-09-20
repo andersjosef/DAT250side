@@ -1,10 +1,11 @@
 from curses import flash
 from email import message
-from flask_wtf import FlaskForm
+from flask_wtf import FlaskForm, RecaptchaField
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, FormField, TextAreaField, FileField
 from wtforms.validators import InputRequired, Length, ValidationError
 from wtforms.fields.html5 import DateField
 from app import app, query_db
+from config import RC_SECRET_KEY, RC_SITE_KEY
 
 # defines all forms in the application, these will be instantiated by the template,
 # and the routes.py will read the values of the fields
@@ -12,9 +13,10 @@ from app import app, query_db
 # TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
 
 class LoginForm(FlaskForm):
-    username = StringField('Username', render_kw={'placeholder': 'Username'})
-    password = PasswordField('Password', render_kw={'placeholder': 'Password'})
+    username = StringField('Username', validators=[InputRequired()], render_kw={'placeholder': 'Username'})
+    password = PasswordField('Password',validators=[InputRequired()], render_kw={'placeholder': 'Password'})
     remember_me = BooleanField('Remember me') # TODO: It would be nice to have this feature implemented, probably by using cookies
+    recaptcha = RecaptchaField()
     submit = SubmitField('Sign In')
 
 class RegisterForm(FlaskForm):
