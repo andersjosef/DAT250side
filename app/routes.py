@@ -36,7 +36,7 @@ def fileType(filename):
 
 #check for valid letters
 def is_valid(text):
-    alphabet = "abcdefghijklmnopqrstuvwxyzæøå1234567890 /_:;-()[]"
+    alphabet = "abcdefghijklmnopqrstuvwxyzæøå1234567890 /_:;-()[].,¨^@*´`!#$%&|\\"
     for char in text:
         # char.lower() makes sure the text is lowercase, otherwise "Hello" would not be valid because capital H wasn't in the alphabet.
         if char.lower() not in alphabet:
@@ -61,6 +61,7 @@ def index():
             user = query_db('SELECT * FROM Users WHERE username="{}";'.format(form.login.username.data), one=True)
             # conn = create_connection(database)
             # user = select_account(conn, form.login.username.data)
+            flash("Remember to never share account details with anyone!")
             print(user)
             # conn.close()
             if user == None:
